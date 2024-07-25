@@ -3,7 +3,7 @@
 
 using namespace std;
 
-int move_nbr{};
+int move_nbr{}; // Number of moves done by the player
 
 string player1{'1'}, player2{'2'};
 string board[3][3] = {
