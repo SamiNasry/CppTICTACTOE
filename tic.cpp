@@ -1,74 +1,69 @@
 #include <iostream>
 #include <string>
+#include <array>
 
 using namespace std;
 
-int move_nbr{}; // Number of moves done by the player
-
-string player1{'1'}, player2{'2'};
-string board[3][3] = {
-    {" ", " " ," "} ,
-    {" ", " " ," "} ,
-    {" ", " " ," "} 
-};
+const int BOARD_SIZE = 3;
 bool game_still = true;
 
-void printboard(string (&arr)[3][3])
+int move_nbr{}; // Number of moves done by the player
+
+enum class Player { Empty = ' ' , X = 'X' , O = 'O'};
+
+string player1{'1'}, player2{'2'};
+
+array<array<Player, BOARD_SIZE>, BOARD_SIZE> board;
+
+
+
+
+void printboard(const array<array<Player, BOARD_SIZE>, BOARD_SIZE>& arr)
 {
-    for(int i{} ; i < 3 ; i++)
+    for(int i{} ; i < BOARD_SIZE ; i++)
     {
-        for (int j{} ; j < 3 ; j++)
+        for (int j{} ; j < BOARD_SIZE ; j++)
         {
-            cout << arr[i][j];
-            if (j < 2) cout << "  | " ;
+            cout << static_cast<char>(board[i][j]);
+            if (j < BOARD_SIZE - 1) cout << "  | " ;
         }
         cout << endl;
-        if (i < 2) cout << "------------" ; 
-        cout << endl;
+        if (i < BOARD_SIZE - 1) cout << "------------" << endl; 
+        
     }
+    cout << endl;
 }
 
 
-bool check_win(string (&arr)[3][3])
-{
-    if (((arr[0][0] == arr[0][1] && arr[0][0] == arr[0][2]) && (arr[0][0] != " ")) ||
-        ((arr[0][0] == arr[1][0] && arr[0][0] == arr[2][0]) && (arr[0][0] != " ")) ||
-        ((arr[2][0] == arr[2][1] && arr[2][0] == arr[2][2]) && (arr[2][0] != " " )) ||
-        ((arr[2][2] == arr[1][2] && arr[2][2] == arr[0][2]) && (arr[0][2] != " " ))||
-        ((arr[0][0] == arr[1][1] && arr[0][0] == arr[2][2]) && (arr[0][0] != " ")) ||
-        ((arr[0][2] == arr[1][1] && arr[1][1] == arr[2][0]) && (arr[2][0] != " ")))
-        {
-            game_still = false;
-            return true;
-        } 
 
-    else return false; 
-}
-
-bool check_draw(string (&arr)[3][3])
+bool check_win(const array<array<Player, BOARD_SIZE> , BOARD_SIZE>& arr )
 {
-    if (move_nbr == 9)
+    for (int i{} ; i < BOARD_SIZE - 1 ; i++)
     {
-        if (!check_win(arr))
-        {
-            game_still = false;
-            return true;
-        }
+        //Check Columns
+        if (arr[0][i] != Player::Empty && arr[0][i] == arr[1][i] && arr[0][i] ==  arr[2][i]) return true;
 
-        else return false;
+        //Check Rows
+        if (arr[i][0] != Player::Empty && arr[i][0] == arr[i][1] && arr[i][0] == arr[i][2]) return true; 
     }
-    else return false;
-    
+    //Check Diagonals
+    if (arr[0][0] != Player::Empty && arr[0][0] == arr[1][1] && arr[0][0] == arr[2][2]) return true;
+    if (arr[0][2] != Player::Empty && arr[0][2] == arr[1][1] && arr[0][2] == arr[2][0]) return true;
 }
 
-bool end_turn(string player)
+bool check_draw()
+{
+    return (move_nbr == BOARD_SIZE * BOARD_SIZE) && (!check_win(board)); 
+}
+
+bool end_turn(const string& player)
 {
     if (check_win(board))
     {
-        cout << "Good win " << player << endl;
+        cout << "Congratulations " << player << ", you win :)" <<  endl;
         return true;
     }
-    else if (check_draw(board))
+    else if (check_draw())
     {
         cout << "It's a draw " << endl;
         return true;
@@ -77,47 +72,64 @@ bool end_turn(string player)
     return false;
     
 }
+
+void PlayerTurn(const string& player_name, Player symbol)
+{
+    int row{}, col{};
+    do {
+        cout << player_name << " , enter your move [row colum] : " ;
+        cin >> row >> col ;
+        row-- ; col--; // Adjust for 0-based index;
+    }
+    while ( row < 0 || row > BOARD_SIZE || col < 0 || col > BOARD_SIZE || board[row][col] != Player::Empty);
+
+    board[row][col] = symbol;
+    move_nbr++;
+    printboard(board);
+}
+
+void GameLoop()
+{
+    while (game_still)
+    {
+        PlayerTurn(player1 , Player::O);
+        if (end_turn(player1))
+        {
+            game_still = false;
+            break;
+        }
+        else{
+            PlayerTurn(player2 , Player::X);
+            if(end_turn(player2))
+            {
+                game_still = false;
+                break;
+            }
+        }
+    }
+}
+
+
 int main()
 {
-    // Welcome player and print board
+
+    for(auto& row : board)
+    {
+        row.fill(Player::Empty);
+    }
+    
+
     cout << "Welcome to the Tic Tac Toe game :) " << endl;
     cout << "Player 1 name : " ;
     cin >> player1;
     cout << endl << "Player 2 name : " ;
     cin >> player2;
+
     printboard(board);
+    GameLoop();
 
-    while (game_still)
-    {
-        int move[2] = {0,0};
+    cout << "The game is over, thanks for playing :)" << endl;
+    return 0;
 
-        cout << player1 << " it's your turn enter your move (row column) : " ;
-        cin >>  move[0] >> move[1];
-        move_nbr++;
-        int row = move[0];
-        int column = move[1];
-        board[(row - 1)][(column - 1)] = "O" ;
-        printboard(board);
-        if (end_turn(player1))
-        {
-            break;
-        } 
-
-        cout << player2 << " it's your turn enter your move (row column) : " ;
-        cin >>  move[0] >> move[1];
-        move_nbr++;
-        row = move[0];
-        column = move[1];
-        board[(row - 1)][(column - 1)] = "X" ;
-        printboard(board);
-        if (end_turn(player2))
-        {
-            break;
-        }
-        
-   
-    }
-
-    cout << "The game is over bye bye :):):)" << endl;
-    
+       
 }
